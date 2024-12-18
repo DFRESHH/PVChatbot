@@ -1,0 +1,7 @@
+gpt_chatbot
+> app.py               # Flask application code
+> chatbot.py           # GPT-related functions
+> templates
+  > index.html         # Frontend user interface
+> static
+  > style.css          # Optional CSS for styling

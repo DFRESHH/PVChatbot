@@ -1,0 +1,6 @@
+__pycache__/
+.env
+
+"chatbot.py" 
+"__pycache__/" 
+"*.pyc" 

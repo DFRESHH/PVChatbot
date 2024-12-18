@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Support Chatbot</title>
+    <style>
+        /* Simple CSS for the Chat Interface */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #chatbox {
+            width: 400px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #messages {
+            padding: 10px;
+            height: 400px;
+            overflow-y: scroll;
+            border-bottom: 1px solid #ccc;
+        }
+
+        #inputArea {
+            display: flex;
+            padding: 10px;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        button {
+            margin-left: 5px;
+            padding: 8px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <!-- Chat Interface -->
+    <div id="chatbox">
+        <div id="messages"></div>
+        <div id="inputArea">
+            <input type="text" id="userInput" placeholder="Type your message here..." />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <!-- JavaScript to Connect to Flask Server -->
+    <script>
+        async function sendMessage() {
+            const userMessage = document.getElementById("userInput").value;
+            const chatbox = document.getElementById("messages");
+
+            // Show user's message
+            chatbox.innerHTML += `<p><strong>You:</strong> ${userMessage}</p>`;
+            document.getElementById("userInput").value = "";
+
+            try {
+                // Send POST request to Flask backend
+                const response = await fetch("http://127.0.0.1:5000/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ "user_id": "12345", "message": userMessage })
+                });
+
+                const data = await response.json();
+
+                // Show assistant's response
+                chatbox.innerHTML += `<p><strong>Bot:</strong> ${data.response}</p>`;
+
+                // Scroll to bottom
+                chatbox.scrollTop = chatbox.scrollHeight;
+            } catch (error) {
+                console.error("Error:", error);
+                chatbox.innerHTML += `<p style="color:red;"><strong>Error:</strong> Could not connect to the server.</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
+
+
