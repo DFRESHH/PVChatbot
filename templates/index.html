@@ -3,31 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPT Chatbot</title>
+    <title>Chatbot</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #chat-container { max-width: 600px; margin: auto; }
+        #messages { border: 1px solid #ccc; padding: 10px; border-radius: 5px; height: 300px; overflow-y: auto; }
+        .message { margin: 5px 0; }
+        .user { font-weight: bold; }
+        .bot { color: blue; }
+    </style>
 </head>
 <body>
-    <h1>Chat with GPT</h1>
-    <div id="chat-box"></div>
-    <input type="text" id="user-input" placeholder="Type your message">
-    <button onclick="sendMessage()">Send</button>
-
+    <div id="chat-container">
+        <h2>Chatbot</h2>
+        <div id="messages"></div>
+        <form id="chat-form">
+            <input type="text" id="user-input" placeholder="Type your message here" required>
+            <button type="submit">Send</button>
+        </form>
+    </div>
     <script>
-        function sendMessage() {
-            const userInput = document.getElementById("user-input").value;
-            const chatBox = document.getElementById("chat-box");
-            chatBox.innerHTML += `<p><b>You:</b> ${userInput}</p>`;
-            fetch("/get_response", {
+        const form = document.getElementById("chat-form");
+        const messagesDiv = document.getElementById("messages");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const userMessage = document.getElementById("user-input").value;
+
+            const userDiv = document.createElement("div");
+            userDiv.classList.add("message", "user");
+            userDiv.textContent = `You: ${userMessage}`;
+            messagesDiv.appendChild(userDiv);
+
+            const response = await fetch("/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: userInput })
-            })
-            .then(response => response.json())
-            .then(data => {
-                chatBox.innerHTML += `<p><b>Bot:</b> ${data.response}</p>`;
-                document.getElementById("user-input").value = "";
+                body: JSON.stringify({ user_id: "12345", message: userMessage }),
             });
-        }
+
+            const data = await response.json();
+            const botDiv = document.createElement("div");
+            botDiv.classList.add("message", "bot");
+            botDiv.textContent = `Bot: ${data.response || "Sorry, something went wrong."}`;
+            messagesDiv.appendChild(botDiv);
+
+            document.getElementById("user-input").value = "";
+        });
     </script>
 </body>
 </html>
-
