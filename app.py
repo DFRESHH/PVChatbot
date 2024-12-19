@@ -1,6 +1,8 @@
+print("App is starting...")
+
 import openai
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template  # Added render_template
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -9,16 +11,15 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = Flask(__name__)
 
-# Define the Assistant ID
-ASSISTANT_ID = "asst_5UHs8QhVNU2VX2Zns6NeHcpD"  # Replace with your actual ID
+# Store conversation history for each user
+conversations = {}
 
-# Store threads for each user
-threads = {}
-
-@app.route("/", methods=["GET"])
+@app.route("/")
 def home():
-    return "Welcome to the Chatbot API! Use the '/chat' endpoint for POST requests."
+    # Serve the chatbot interface
+    return render_template("index.html")
 
+# Chat endpoint (existing code)
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
@@ -27,60 +28,47 @@ def chat():
         user_id = data.get("user_id")
         message = data.get("message")
 
-        # Create a thread if it doesn't already exist
-        if user_id not in threads:
-            thread = openai.beta.threads.create()
-            threads[user_id] = thread.id
+        if not user_id or not message:
+            return jsonify({"error": "Both 'user_id' and 'message' are required"}), 400
 
-        thread_id = threads[user_id]
+        # Retrieve conversation history or start a new one
+        if user_id not in conversations:
+            conversations[user_id] = [
+                {"role": "system", "content": "You are an inquisitive assistant. Ask follow-up questions to engage the user, such as 'What has you here today?' or 'What do you mean by that?'. If the user uses emotional words like 'frustrated', 'stressed', or 'angry', acknowledge their emotions by repeating those words in your response."}
+            ]
 
-        # Add the user's message to the thread
-        openai.beta.threads.messages.create(
-            thread_id=thread_id,
-            role="user",
-            content=message
+        # Append the user's message to the conversation
+        conversations[user_id].append({"role": "user", "content": message})
+
+        # Generate a response using the OpenAI ChatCompletion API
+        response = openai.ChatCompletion.create(
+            model="gpt-4",  # Use "gpt-3.5-turbo" if GPT-4 is unavailable
+            messages=conversations[user_id]
         )
 
-        # Run the assistant
-        run = openai.beta.threads.runs.create(
-            thread_id=thread_id,
-            assistant_id=ASSISTANT_ID
-        )
+        # Extract the assistant's reply
+        assistant_message = response["choices"][0]["message"]["content"]
 
-        # Poll for the assistant's response
-        while True:
-            run_status = openai.beta.threads.runs.retrieve(thread_id=thread_id, run_id=run.id)
-            print(f"Run Status: {run_status.status}")  # Debugging line
-            if run_status.status in ["completed", "failed"]:
-                break
+        # Add the assistant's reply to the conversation history
+        conversations[user_id].append({"role": "assistant", "content": assistant_message})
 
-        # Retrieve all messages in the thread
-        messages = openai.beta.threads.messages.list(thread_id=thread_id)
-
-        # Debug: Print all messages
-        print("Messages in thread:")
-        for msg in messages.data:
-            print(f"{msg.role}: {msg.content[0].text.value}")
-
-        # Get the assistant's response
-        assistant_response = None
-        for msg in reversed(messages.data):
-            if msg.role == "assistant":
-                assistant_response = msg.content[0].text.value
-                break
-
-        if not assistant_response:
-            assistant_response = "Sorry, I couldn't generate a response."
-
-        return jsonify({"response": assistant_response})
+        return jsonify({"response": assistant_message})
 
     except Exception as e:
         return jsonify({"error": str(e)})
 
+# Error handler for 404 errors
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({"error": "Endpoint not found. Check the URL and try again."}), 404
+
 if __name__ == "__main__":
-    # Use the PORT environment variable assigned by Render
-    port = int(os.getenv("PORT", 5000))  # Default to 5000 if PORT is not set
+    print("App is starting...")
+    port = int(os.getenv("PORT", 5000))  # Use PORT from environment or default to 5000
     app.run(host="0.0.0.0", port=port, debug=True)
+
+
+
 
 
 

@@ -1,6 +1,12 @@
+# Node.js dependencies
+node_modules/
+
+# Python dependencies
+*.pyc
 __pycache__/
+
+# Environment variables
 .env
 
-"chatbot.py" 
-"__pycache__/" 
-"*.pyc" 
+# Logs
+*.log
