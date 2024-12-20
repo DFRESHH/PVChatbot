@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 import openai
 import os
+import json  # Import for reading JSON files
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -47,6 +48,12 @@ def chat():
         # Append the user's message
         conversations[user_id].append({"role": "user", "content": message})
 
+        # Use training data if needed
+        if training_data:
+            # Example: Inject knowledge into system context dynamically
+            training_context = " ".join([entry['content'] for entry in training_data if entry['role'] == "assistant"])
+            conversations[user_id][0]['content'] += f" Here is additional context: {training_context}"
+
         # Generate a response using OpenAI
         response = openai.ChatCompletion.create(
             model="gpt-4",
@@ -77,6 +84,7 @@ def chat():
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
