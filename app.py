@@ -12,6 +12,16 @@ app = Flask(__name__)
 # Store conversation history
 conversations = {}
 
+# Load training data
+try:
+    training_data_path = "data/mai_training_data.json"  # Path to your training data file
+    with open(training_data_path, 'r') as file:
+        training_data = json.load(file)
+        print("Training data loaded successfully.")
+except Exception as e:
+    print(f"Error loading training data: {e}")
+    training_data = None  # Fallback if the file fails to load
+
 @app.route("/")
 def home():
     return render_template("index.html")
