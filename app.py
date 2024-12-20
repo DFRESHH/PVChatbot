@@ -1,8 +1,6 @@
-print("App is starting...")
-
+from flask import Flask, request, jsonify, render_template
 import openai
 import os
-from flask import Flask, request, jsonify, render_template  # Added render_template
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -11,64 +9,64 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = Flask(__name__)
 
-# Store conversation history for each user
+# Store conversation history
 conversations = {}
 
 @app.route("/")
 def home():
-    # Serve the chatbot interface
     return render_template("index.html")
 
-# Chat endpoint (existing code)
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
-        # Parse user input
+        # Parse the incoming JSON request
         data = request.get_json()
         user_id = data.get("user_id")
         message = data.get("message")
 
+        # Validate input
         if not user_id or not message:
             return jsonify({"error": "Both 'user_id' and 'message' are required"}), 400
 
-        # Retrieve conversation history or start a new one
+        # Initialize conversation history if new user
         if user_id not in conversations:
             conversations[user_id] = [
-                {"role": "system", "content": "You are an iempathetic and nquisitive assistant. Always ask follow-up questions to engage the user, such as 'What has you here today?' or 'What do you mean by that?'. If the user uses emotional words like 'frustrated', 'stressed', or 'angry', acknowledge their emotions by repeating those words in your response."}
+                {"role": "system", "content": "You are Mia, a helpful assistant who asks questions to clarify the user's needs."}
             ]
 
-        # Append the user's message to the conversation
+        # Append the user's message
         conversations[user_id].append({"role": "user", "content": message})
 
-        # Generate a response using the OpenAI ChatCompletion API
+        # Generate a response using OpenAI
         response = openai.ChatCompletion.create(
-            model="gpt-4",  # Use "gpt-3.5-turbo" if GPT-4 is unavailable
+            model="gpt-4",
             messages=conversations[user_id]
         )
 
-        # Extract the assistant's reply
+        # Extract the assistant's response
         assistant_message = response["choices"][0]["message"]["content"]
 
-        # Add the assistant's reply to the conversation history
+        # Append the assistant's response
         conversations[user_id].append({"role": "assistant", "content": assistant_message})
 
         return jsonify({"response": assistant_message})
 
-    except Exception as e:
-        return jsonify({"error": str(e)})
+    except KeyError:
+        # Handle malformed JSON
+        return jsonify({"error": "Malformed request. Please include 'user_id' and 'message'."}), 400
 
-# Error handler for 404 errors
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({"error": "Endpoint not found. Check the URL and try again."}), 404
+    except openai.error.OpenAIError as e:
+        # Handle OpenAI API errors
+        return jsonify({"error": f"OpenAI API error: {str(e)}"}), 500
+
+    except Exception as e:
+        # Handle unexpected errors
+        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
+
 
 if __name__ == "__main__":
-    print("App is starting...")
-    port = int(os.getenv("PORT", 5000))  # Use PORT from environment or default to 5000
+    port = int(os.getenv("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
-
-
-
 
 
 

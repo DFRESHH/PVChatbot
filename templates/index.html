@@ -3,52 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot</title>
+    <title>Mia Chatbot</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        #chat-container { max-width: 600px; margin: auto; }
-        #messages { border: 1px solid #ccc; padding: 10px; border-radius: 5px; height: 300px; overflow-y: auto; }
-        .message { margin: 5px 0; }
-        .user { font-weight: bold; }
-        .bot { color: blue; }
+        /* General Styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: silver; /* Set background to silver */
+        }
+
+        .chat-container {
+            width: 50%;
+            margin: 50px auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: #4a90e2;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.5em;
+        }
+
+        .chat-body {
+            height: 400px;
+            overflow-y: scroll;
+            padding: 20px;
+            background: #fafafa;
+        }
+
+        .chat-message {
+            margin-bottom: 20px;
+        }
+
+        .chat-message.user {
+            text-align: right;
+        }
+
+        .chat-message.bot {
+            text-align: left;
+        }
+
+        .chat-input-container {
+            display: flex;
+            border-top: 1px solid #ccc;
+            background: #fff;
+        }
+
+        .chat-input-container input {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            outline: none;
+            font-size: 1em;
+        }
+
+        .chat-input-container button {
+            padding: 15px;
+            background: #4a90e2;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        .chat-input-container button:hover {
+            background: #357abd;
+        }
     </style>
 </head>
 <body>
-    <div id="chat-container">
-        <h2>Chatbot</h2>
-        <div id="messages"></div>
-        <form id="chat-form">
-            <input type="text" id="user-input" placeholder="Type your message here" required>
-            <button type="submit">Send</button>
-        </form>
+    <div class="chat-container">
+        <div class="chat-header">Mia Chatbot</div>
+        <div class="chat-body" id="chat-body">
+            <!-- Chat messages will be appended here -->
+        </div>
+        <div class="chat-input-container">
+            <input type="text" id="chat-input" placeholder="Type your message here...">
+            <button id="send-button">Send</button>
+        </div>
     </div>
+
     <script>
-        const form = document.getElementById("chat-form");
-        const messagesDiv = document.getElementById("messages");
+        const chatBody = document.getElementById("chat-body");
+        const chatInput = document.getElementById("chat-input");
+        const sendButton = document.getElementById("send-button");
 
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const userMessage = document.getElementById("user-input").value;
-
-            const userDiv = document.createElement("div");
-            userDiv.classList.add("message", "user");
-            userDiv.textContent = `You: ${userMessage}`;
-            messagesDiv.appendChild(userDiv);
-
-            const response = await fetch("/chat", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ user_id: "12345", message: userMessage }),
-            });
-
-            const data = await response.json();
-            const botDiv = document.createElement("div");
-            botDiv.classList.add("message", "bot");
-            botDiv.textContent = `Bot: ${data.response || "Sorry, something went wrong."}`;
-            messagesDiv.appendChild(botDiv);
-
-            document.getElementById("user-input").value = "";
+        sendButton.addEventListener("click", sendMessage);
+        chatInput.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") sendMessage();
         });
+
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (message === "") return;
+
+            appendMessage("user", message);
+            chatInput.value = "";
+
+            // Send the message to the Flask API
+            fetch("/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ user_id: "12345", message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.response) {
+                    appendMessage("bot", data.response);
+                } else {
+                    appendMessage("bot", "Sorry, I couldn't process your request.");
+                }
+            })
+            .catch(err => {
+                appendMessage("bot", "Error: Unable to connect to the server.");
+            });
+        }
+
+        function appendMessage(sender, message) {
+            const messageElement = document.createElement("div");
+            messageElement.classList.add("chat-message", sender);
+            messageElement.innerText = message;
+            chatBody.appendChild(messageElement);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
     </script>
 </body>
 </html>
