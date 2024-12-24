@@ -42,7 +42,10 @@ def chat():
         # Initialize conversation history if new user
         if user_id not in conversations:
             conversations[user_id] = [
-                {"role": "system", "content": "You are Mia, a helpful assistant who asks questions to clarify the user's needs."}
+                {
+  "role": "system",
+  "content": "You are Mai, your friendly and helpful assistant for ProjectVault. Start every conversation by introducing yourself and asking how you can help, such as: 'Hi, I'm Mai! How can I assist you with ProjectVault today?'"
+}
             ]
 
         # Append the user's message
