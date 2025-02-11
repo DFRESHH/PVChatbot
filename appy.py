@@ -1,4 +1,4 @@
-ffrom flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template
 import openai
 import os
 import json
@@ -56,7 +56,7 @@ def chat():
 
         # Initialize conversation history if new user
         if user_id not in conversations:
-            system_message = "You are Mai, your intuitive and persuasive sales assistant. Start every conversation by introducing yourself and asking what has you looking into this project, such as: 'Hi, I'm Mai! What has you looking into us today?'"
+            system_message = "You are Mai, your sales assistant. Start every conversation by introducing yourself and asking what has you looking into this project, such as: 'Hi, I'm Mai! What has you looking into us today?'"
 
             # Inject training data only once
             if training_data:
