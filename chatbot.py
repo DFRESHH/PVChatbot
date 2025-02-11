@@ -1,40 +1,43 @@
 import openai
 import os
-from dotenv import load_dotenv  # Import dotenv to load API key from .env
+from dotenv import load_dotenv  
 
 # Load environment variables
 load_dotenv()
 
-# Set your API key from .env
+# Set your API key and Assistant ID from .env
 openai.api_key = os.getenv("OPENAI_API_KEY")
+assistant_id = os.getenv("ASSISTANT_ID")
 
-# Validate that the API key is loaded
+# Validate that both keys are loaded
 if not openai.api_key:
     raise ValueError("Error: OPENAI_API_KEY is missing. Check your .env file.")
+if not assistant_id:
+    raise ValueError("Error: ASSISTANT_ID is missing. Check your .env file.")
 
-# Function to communicate with GPT-4
-def chat_with_gpt4(prompt):
+# Function to communicate with MAI
+def chat_with_mai(prompt):
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4",  # Specify GPT-4 here
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt}
-            ]
+        # Create a new thread for conversation
+        thread = openai.beta.threads.create(
+            assistant_id=assistant_id,
+            messages=[{"role": "user", "content": prompt}]
         )
-        # Extract the assistant's reply
-        return response['choices'][0]['message']['content']
+
+        # Get MAI's response
+        response = thread["choices"][0]["message"]["content"]
+        return response
+
     except Exception as e:
         return f"Error: {str(e)}"
 
-# Interactive Chat Loop
+# Interactive Chat Loop with MAI
 if __name__ == "__main__":
-    print("Chat with GPT-4! Type 'exit' to quit.\n")
+    print("Chat with MAI! Type 'exit' to quit.\n")
     while True:
         user_input = input("You: ")
         if user_input.lower() == "exit":
             print("Exiting. Goodbye!")
             break
-        response = chat_with_gpt4(user_input)
-        print(f"GPT-4: {response}")
-
+        response = chat_with_mai(user_input)
+        print(f"MAI: {response}")
